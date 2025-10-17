@@ -59,11 +59,15 @@ export function detectCategory(text: string): keyof typeof CATEGORY_KEYWORDS {
 
 export function planFromCategory(category: keyof typeof TEMPLATES, userIdea: string, capitalHint?: number) {
   const tpl = TEMPLATES[category] || TEMPLATES.service;
-  const [bMin, bMax] = tpl.budget;
-  let min = bMin, max = bMax;
+  const [bMinRaw, bMaxRaw] = tpl.budget as [number, number];
+  // Widen literal tuple values to number so we can do math & reassign:
+  let min: number = Number(bMinRaw);
+  let max: number = Number(bMaxRaw);
+
   if (typeof capitalHint === "number" && capitalHint > 0) {
-    const factor = Math.max(0.6, Math.min(1.4, capitalHint / ((bMin+bMax)/2)));
-    min = Math.round(bMin * factor); max = Math.round(bMax * factor);
+    const factor = Math.max(0.6, Math.min(1.4, capitalHint / ((min + max) / 2)));
+    min = Math.round(min * factor);
+    max = Math.round(max * factor);
   }
   return {
     summary: `Plan for: ${userIdea}. A lean ${category.replace("_"," ")} approach focusing on fast validation, low fixed costs, and early revenue.`,
