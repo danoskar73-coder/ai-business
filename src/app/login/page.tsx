@@ -1,19 +1,28 @@
 'use client';
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
 
 const ACCOUNT_TYPES = ["Founder","Partner","Employee","Mentor","Investor","Admin"] as const;
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [accountType, setAccountType] = useState<(typeof ACCOUNT_TYPES)[number]>("Founder");
+  const [callbackUrl, setCallbackUrl] = useState<string>("/");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string|null>(null);
 
   const router = useRouter();
-  const sp = useSearchParams();
-  const callbackUrl = useMemo(() => sp.get("callbackUrl") || "/", [sp]);
+
+  // Read ?callbackUrl=... on the client without useSearchParams
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const cb = url.searchParams.get("callbackUrl");
+    setCallbackUrl(cb && cb.startsWith("/") ? cb : "/");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +32,7 @@ export default function LoginPage() {
     const res = await signIn("credentials", {
       email,
       accountType,
-      redirect: false,   // avoid built-in redirect flakiness locally
+      redirect: false,   // manual redirect on success
       callbackUrl,
     });
 
