@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
+import { detectCategory, planFromCategory } from "@/lib/rules";
 
 export async function POST(req: Request) {
-  const { idea } = await req.json();
-
-  return NextResponse.json({
-    summary: `Plan for: ${idea}`,
-    estBudget: { min: 500, max: 2500 },
-    estTimelineMonths: 3,
-    risks: ["Market validation", "Cashflow", "Acquisition costs"],
-    first10Steps: [
-      { order: 1, title: "Validate demand", checklist: ["Talk to 10 users","Competitive scan"] },
-      { order: 2, title: "Define MVP offer", checklist: ["Landing page","Payment link"] },
-      { order: 3, title: "Acquire first 10 users", checklist: ["DM outreach","Local groups"] },
-    ],
-    kpisWeek1: ["10 discovery calls","1 pre-sale"]
-  });
+  try {
+    const { idea, capital } = await req.json();
+    const text = String(idea || "").trim();
+    if (text.length < 5) {
+      return NextResponse.json({ error: "Please describe your idea." }, { status: 400 });
+    }
+    const cat = detectCategory(text);
+    const capHint = Number(capital ?? 0);
+    const plan = planFromCategory(cat, text, isFinite(capHint) ? capHint : undefined);
+    return NextResponse.json(plan);
+  } catch (e:any) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+  }
 }

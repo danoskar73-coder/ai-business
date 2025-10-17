@@ -1,35 +1,65 @@
 import { NextResponse } from "next/server";
+import { CATALOG, planFromCategory } from "@/lib/rules";
+import { enrichProfile } from "@/lib/enrich";
 
-function overlap(a: string[], b: string[]) {
-  const A = a.map(s=>s.trim().toLowerCase()).filter(Boolean);
-  const B = b.map(s=>s.trim().toLowerCase()).filter(Boolean);
-  const inter = A.filter(x => B.includes(x)).length;
-  const union = new Set([...A, ...B]).size || 1;
-  return (inter / union) * 100;
+function score(idea:any, prof:ReturnType<typeof enrichProfile>) {
+  const s = new Set(prof.skillTags);
+  const p = new Set(prof.passionTags);
+  const sScore = idea.skillTags.filter((x:string)=>s.has(x)).length;
+  const pScore = idea.passionTags.filter((x:string)=>p.has(x)).length;
+
+  const capitalFit = (() => {
+    const [lo,hi] = idea.capitalBand as [number,number];
+    const guess = prof.capitalLevel === "very_low" ? 50
+                : prof.capitalLevel === "low" ? 200
+                : prof.capitalLevel === "medium" ? 1000
+                : 3000;
+    return (guess >= lo && guess <= hi) ? 1 : 0.6;
+  })();
+
+  const locationFit = (idea.locations||[]).includes("any") ? 1
+                     : prof.locationTier !== "unknown" ? 0.9 : 0.7;
+
+  return 0.45*sScore + 0.30*pScore + 0.15*capitalFit*3 + 0.10*locationFit*3;
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const capital = Number(body.capital ?? 0);
-  const skills = String(body.skills ?? "");
-  const passions = String(body.passions ?? "");
-  const location = String(body.location ?? "");
+  try {
+    const body = await req.json();
+    const capital = Number(body.capital ?? 0);
+    const skills = String(body.skills ?? "").trim();
+    const passions = String(body.passions ?? "").trim();
+    const location = String(body.location ?? "").trim();
 
-  const catalog = [
-    { title: "Mobile Auto Detailing", description: "Service business with quick path to cash.", skillTags:["sales","operations"], passionTags:["cars"], capitalBand:[300,2000], locations:["new york, ny","any"] },
-    { title: "Niche Shopify Store", description: "E-commerce with one-product MVP.", skillTags:["marketing","ads"], passionTags:["fitness","tech"], capitalBand:[1000,5000], locations:["any"] },
-    { title: "Local Content + UGC Agency", description: "Short-form content for small businesses.", skillTags:["marketing","video"], passionTags:["media"], capitalBand:[200,1500], locations:["any"] },
-  ];
+    const allBlank = (!capital || capital === 0) && !skills && !passions && !location;
+    if (allBlank) {
+      return NextResponse.json(
+        { error: "Please fill at least one field (capital, skills, passions, or location)." },
+        { status: 400 }
+      );
+    }
 
-  const S = skills.split(",");
-  const P = passions.split(",");
+    const prof = enrichProfile({ capital, skills, passions, location });
 
-  const scored = catalog.map(i=>{
-    const s = 0.4*overlap(S, i.skillTags) + 0.3*overlap(P, i.passionTags) +
-               0.2*(capital>=i.capitalBand[0] && capital<=i.capitalBand[1] ? 100 : 60) +
-               0.1*(i.locations.includes("any") || i.locations.includes(location.toLowerCase()) ? 100 : 70);
-    return { ...i, matchScore: s };
-  }).sort((a,b)=>b.matchScore-a.matchScore);
+    const ideas = CATALOG
+      .map(idea => {
+        const matchScore = score(idea, prof) * 25;
+        const plan = planFromCategory(idea.category, idea.title, capital || undefined);
+        const visibleSteps = plan.first10Steps.slice(0, 2).map(s => s.title);
+        const hiddenSteps  = plan.first10Steps.slice(2, 8).map(s => s.title);
+        return {
+          title: idea.title,
+          description: idea.description,
+          matchScore: Math.max(0, Math.min(100, Math.round(matchScore))),
+          visibleSteps,
+          hiddenSteps,
+        };
+      })
+      .sort((a,b)=> b.matchScore - a.matchScore)
+      .slice(0, 6);
 
-  return NextResponse.json({ ideas: scored });
+    return NextResponse.json({ ideas, profile: prof });
+  } catch (e:any) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+  }
 }
