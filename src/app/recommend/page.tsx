@@ -275,8 +275,6 @@ function HUDOverlay({
   );
 }
 
-type Rec = Scored;
-
 export default function RecommendPage() {
   const [stepIdx, setStepIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[] | string>>({});
