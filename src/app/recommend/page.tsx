@@ -100,33 +100,20 @@ function ConferenceAnim({ show }: { show: boolean }) {
     });
   }, [show]);
   return (
-    <div className={`fixed inset-0 flex items-center justify-center bg-gray-900/95 text-white transition ${show ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      <div className="max-w-3xl w-full px-8">
+    <div className={`fixed inset-0 flex items-center justify-center bg-white/90 text-gray-900 transition ${show ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className="max-w-2xl w-full px-8">
         <div className="text-center mb-6">
-          <div className="text-2xl md:text-3xl font-bold">Analyzing your answers…</div>
-          <div className="text-sm text-gray-300 mt-1">Simulating a global business conference</div>
+          <div className="text-2xl md:text-3xl font-semibold">Preparing your tailored matches…</div>
+          <div className="text-sm text-gray-600 mt-1">Reviewing capital fit, skills, interests and channels</div>
         </div>
-        <div className="relative h-48 md:h-56 rounded-3xl bg-gradient-to-r from-gray-800 to-gray-700 overflow-hidden shadow-2xl">
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/10 to-transparent"></div>
-          <div className="absolute -left-10 top-6 w-28 h-40 bg-gray-600/40 rounded-lg rotate-[-6deg] blur-sm"></div>
-          <div className="absolute left-8 bottom-6 flex items-end gap-6">
-            <div className="w-12 h-24 bg-gray-300 rounded-md"></div>
-            <div className="w-12 h-28 bg-gray-200 rounded-md"></div>
-            <div className="w-12 h-[6.5rem] bg-gray-400 rounded-md"></div>
-          </div>
-          <div className="absolute right-8 bottom-8 flex items-center gap-4">
-            <div className="w-10 h-16 bg-blue-500/70 rounded-md"></div>
-            <div className="w-10 h-16 bg-indigo-500/70 rounded-md"></div>
-            <div className="w-10 h-16 bg-violet-500/70 rounded-md"></div>
-          </div>
-          <div className={`absolute left-32 top-10 px-3 py-2 rounded-xl bg-white text-gray-900 text-xs md:text-sm shadow ${phase>=1?'opacity-100 translate-y-0':'opacity-0 -translate-y-3'} transition-all`} style={{transitionDuration:'400ms'}}>Market sizing</div>
-          <div className={`absolute left-52 top-20 px-3 py-2 rounded-xl bg-white text-gray-900 text-xs md:text-sm shadow ${phase>=2?'opacity-100 translate-y-0':'opacity-0 -translate-y-3'} transition-all`} style={{transitionDuration:'400ms'}}>Capital fit</div>
-          <div className={`absolute right-40 top-12 px-3 py-2 rounded-xl bg-white text-gray-900 text-xs md:text-sm shadow ${phase>=3?'opacity-100 translate-y-0':'opacity-0 -translate-y-3'} transition-all`} style={{transitionDuration:'400ms'}}>GTM channels</div>
-          <div className={`absolute right-24 bottom-14 px-3 py-2 rounded-xl bg-white text-gray-900 text-xs md:text-sm shadow ${phase>=4?'opacity-100 translate-y-0':'opacity-0 -translate-y-3'} transition-all`} style={{transitionDuration:'400ms'}}>Skills match</div>
-          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-gray-900/60 to-transparent"></div>
+        <div className="relative h-40 md:h-44 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-200 overflow-hidden shadow-lg border border-slate-200">
+          <div className={`absolute left-8 top-6 px-3 py-2 rounded-lg bg-white text-gray-800 text-xs md:text-sm shadow ${phase>=1?'opacity-100 translate-y-0':'opacity-0 -translate-y-2'} transition-all`} style={{transitionDuration:'350ms'}}>Capital fit</div>
+          <div className={`absolute left-40 top-16 px-3 py-2 rounded-lg bg-white text-gray-800 text-xs md:text-sm shadow ${phase>=2?'opacity-100 translate-y-0':'opacity-0 -translate-y-2'} transition-all`} style={{transitionDuration:'350ms'}}>GTM channels</div>
+          <div className={`absolute right-40 top-10 px-3 py-2 rounded-lg bg-white text-gray-800 text-xs md:text-sm shadow ${phase>=3?'opacity-100 translate-y-0':'opacity-0 -translate-y-2'} transition-all`} style={{transitionDuration:'350ms'}}>Skills alignment</div>
+          <div className={`absolute right-10 bottom-6 px-3 py-2 rounded-lg bg-white text-gray-800 text-xs md:text-sm shadow ${phase>=4?'opacity-100 translate-y-0':'opacity-0 -translate-y-2'} transition-all`} style={{transitionDuration:'350ms'}}>Industry interest</div>
         </div>
-        <div className="mt-5 h-2 w-full bg-gray-700 rounded-full overflow-hidden">
-          <div className="h-2 bg-blue-500 rounded-full" style={{width: `${25 * (phase || 1)}%`, transition: 'width 300ms ease'}}></div>
+        <div className="mt-5 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-2 bg-blue-600 rounded-full" style={{width: `${25 * (phase || 1)}%`, transition: 'width 300ms ease'}}></div>
         </div>
       </div>
     </div>
@@ -135,16 +122,9 @@ function ConferenceAnim({ show }: { show: boolean }) {
 
 type Rec = Scored;
 
-function HUDOverlay({
-  idea,
-  onClose
-}: {
-  idea: Rec | null;
-  onClose: () => void;
-}) {
+function FocusOverlay({ idea, onClose }: { idea: Rec | null; onClose: () => void }) {
   const [show, setShow] = useState(false);
   const [showStart, setShowStart] = useState(false);
-
   useEffect(() => {
     if (idea) {
       setShow(true);
@@ -155,115 +135,80 @@ function HUDOverlay({
       setShowStart(false);
     }
   }, [idea]);
-
   if (!idea) return null;
 
-  const keywords = Array.from(new Set([
-    idea.category, idea.customer, idea.workMode, idea.timeToCash, idea.sales, idea.labor,
-    ...(idea.gtm || []), ...(idea.skills || []), ...(idea.interests || [])
-  ].filter(Boolean))).map(s => String(s).toUpperCase());
-
   return (
-    <div className={`fixed inset-0 z-50 transition ${show ? 'opacity-100' : 'opacity-0'} bg-black/80`}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-10 left-0 right-0 overflow-hidden whitespace-nowrap opacity-20">
-          <div className="inline-block pr-12 animate-[ticker_20s_linear_infinite] will-change-transform">
-            {keywords.concat(keywords).map((k, i) => (
-              <span key={`t1-${i}`} className="mx-6 font-mono tracking-widest text-sm text-emerald-300">{k}</span>
-            ))}
-          </div>
-        </div>
-        <div className="absolute top-24 left-0 right-0 overflow-hidden whitespace-nowrap opacity-10">
-          <div className="inline-block pr-12 animate-[ticker_28s_linear_infinite] will-change-transform">
-            {keywords.concat(keywords).map((k, i) => (
-              <span key={`t2-${i}`} className="mx-6 font-mono tracking-widest text-sm text-cyan-300">{k}</span>
-            ))}
-          </div>
-        </div>
+    <div className={`fixed inset-0 z-50 transition ${show ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="absolute inset-0 bg-[#0B1220]/85" />
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.15),transparent_55%)]" />
       </div>
 
       <div className="relative h-full w-full flex items-center justify-center px-4">
         <div className="absolute top-6 left-6">
-          <button onClick={onClose} className="rounded-full border border-white/30 text-white/90 hover:text-white hover:bg-white/10 px-4 py-2 text-sm">Back</button>
+          <button onClick={onClose} className="rounded-full border border-white/20 text-white/90 hover:text-white hover:bg-white/10 px-4 py-2 text-sm">Back</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-6xl w-full">
-          <div className="md:col-span-3 rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-white/10 p-6 shadow-2xl">
+          <div className="md:col-span-3 rounded-3xl bg-white/90 backdrop-blur border border-slate-200 p-6 shadow-xl">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-2xl md:text-3xl font-extrabold text-white">{idea.title}</h3>
-                <div className="mt-1 text-sm text-gray-300">{idea.blurb}</div>
+                <h3 className="text-2xl md:text-3xl font-semibold text-slate-900">{idea.title}</h3>
+                <div className="mt-1 text-sm text-slate-600">{idea.blurb}</div>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-extrabold text-emerald-400">{Math.round(idea.score)}%</div>
-                <div className="text-xs text-gray-400">match</div>
+                <div className="text-3xl font-extrabold text-blue-600">{Math.round(idea.score)}%</div>
+                <div className="text-xs text-slate-500">match</div>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 text-sm text-gray-200">
-              <div><span className="font-semibold">Category:</span> {idea.category.toUpperCase()}</div>
-              <div><span className="font-semibold">Customer:</span> {String(idea.customer).toUpperCase()}</div>
-              <div><span className="font-semibold">Go-to-market:</span> {(idea.gtm||[]).join(', ') || '—'}</div>
-              <div><span className="font-semibold">Skills leveraged:</span> {(idea.skills||[]).join(', ') || '—'}</div>
-              <div><span className="font-semibold">Interests aligned:</span> {(idea.interests||[]).join(', ') || '—'}</div>
+            <div className="mt-6 text-sm text-slate-800 leading-relaxed">
+              Launch and operate <span className="font-semibold">{idea.title}</span>. Work mode: <span className="font-semibold">{idea.workMode}</span>. Typical time to first cash: <span className="font-semibold">{idea.timeToCash}</span>. Sales effort: <span className="font-semibold">{idea.sales}</span>. Labor intensity: <span className="font-semibold">{idea.labor}</span>. Inventory: <span className="font-semibold">{(idea as any).inventory}</span>. Compliance: <span className="font-semibold">{idea.compliance}</span>. GTM: <span className="font-semibold">{(idea.gtm||[]).join(', ') || '—'}</span>. Skills leveraged: <span className="font-semibold">{(idea.skills||[]).join(', ') || 'generalist ops'}</span>. Interests: <span className="font-semibold">{(idea.interests||[]).join(', ') || 'small business'}</span>.
             </div>
 
-            <div className="mt-6">
-              <div className="text-sm font-semibold text-white mb-2">Description</div>
-              <div className="text-sm text-gray-200 leading-relaxed">
-                Launch and operate <span className="font-semibold">{idea.title}</span>. Work mode: <span className="font-semibold">{idea.workMode}</span>. Typical time to first cash: <span className="font-semibold">{idea.timeToCash}</span>. Sales effort: <span className="font-semibold">{idea.sales}</span>. Labor intensity: <span className="font-semibold">{idea.labor}</span>. Inventory: <span className="font-semibold">{idea.inventory}</span>. Compliance: <span className="font-semibold">{idea.compliance}</span>. GTM channels include <span className="font-semibold">{(idea.gtm||[]).join(', ') || '—'}</span>. This path leverages <span className="font-semibold">{(idea.skills||[]).join(', ') || 'generalist ops'}</span> skills and aligns with interests in <span className="font-semibold">{(idea.interests||[]).join(', ') || 'small business'}</span>.
+            {idea.reasons?.length ? (
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-slate-900 mb-1">Why this fits</div>
+                <ul className="list-disc pl-5 text-sm text-slate-700">
+                  {idea.reasons.slice(0,5).map((r,i)=>(<li key={i}>{r}</li>))}
+                </ul>
               </div>
-              {idea.reasons?.length ? (
-                <div className="mt-4">
-                  <div className="text-sm font-semibold text-white mb-1">Why you match</div>
-                  <ul className="list-disc pl-5 text-sm text-gray-200">
-                    {idea.reasons.slice(0,5).map((r,i)=>(<li key={i}>{r}</li>))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
+            ) : null}
           </div>
 
-          <div className="md:col-span-2 rounded-3xl bg-gray-900/70 border border-white/10 p-6 text-emerald-300">
-            <div className="text-sm font-mono tracking-wide text-gray-300 mb-2">TACTICAL STATS</div>
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">CAPITAL BAND</div>
-                <div className="text-emerald-300 text-lg">${(idea as any).capitalBand?.[0] ?? '—'}–${(idea as any).capitalBand?.[1] ?? '—'}</div>
+          <div className="md:col-span-2 rounded-3xl bg-white/80 backdrop-blur border border-slate-200 p-6 shadow-xl">
+            <div className="text-sm font-semibold text-slate-900 mb-3">Business Snapshot</div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Capital band</div>
+                <div className="text-slate-900 text-lg">${(idea as any).capitalBand?.[0] ?? '—'}–${(idea as any).capitalBand?.[1] ?? '—'}</div>
               </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">TIME TO CASH</div>
-                <div className="text-emerald-300 text-lg">{idea.timeToCash.toUpperCase()}</div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Time to cash</div>
+                <div className="text-slate-900 text-lg">{idea.timeToCash.toUpperCase()}</div>
               </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">COMPLIANCE</div>
-                <div className="text-emerald-300 text-lg">{idea.compliance.toUpperCase()}</div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Compliance</div>
+                <div className="text-slate-900 text-lg">{idea.compliance.toUpperCase()}</div>
               </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">WORK MODE</div>
-                <div className="text-emerald-300 text-lg">{idea.workMode.toUpperCase()}</div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Customer</div>
+                <div className="text-slate-900 text-lg">{String(idea.customer).toUpperCase()}</div>
               </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">SALES EFFORT</div>
-                <div className="text-emerald-300 text-lg">{idea.sales.toUpperCase()}</div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Work mode</div>
+                <div className="text-slate-900 text-lg">{idea.workMode.toUpperCase()}</div>
               </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">LABOR</div>
-                <div className="text-emerald-300 text-lg">{idea.labor.toUpperCase()}</div>
-              </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">INVENTORY</div>
-                <div className="text-emerald-300 text-lg">{(idea as any).inventory?.toUpperCase?.() ?? '—'}</div>
-              </div>
-              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
-                <div className="text-gray-400">CUSTOMER</div>
-                <div className="text-emerald-300 text-lg">{String(idea.customer).toUpperCase()}</div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div className="text-slate-500">Sales effort</div>
+                <div className="text-slate-900 text-lg">{idea.sales.toUpperCase()}</div>
               </div>
             </div>
-            <div className={`mt-6 flex justify-center ${showStart ? 'opacity-100 animate-[fadeInUp_400ms_ease-out_forwards]' : 'opacity-0'}`}>
+
+            <div className={`mt-6 flex justify-center ${showStart ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
               <Link
                 href={`/idea?title=${encodeURIComponent(idea.title)}`}
-                className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-semibold px-6 py-3"
+                className="rounded-full bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3"
               >
                 Get Started
               </Link>
@@ -292,7 +237,6 @@ export default function RecommendPage() {
     return base;
   }, [answers]);
 
-  const total = steps.length;
   const step = steps[stepIdx];
 
   function setSingle(id: string, value: string) { setAnswers((a) => ({ ...a, [id]: value })); }
@@ -311,7 +255,7 @@ export default function RecommendPage() {
     if (q.type === 'multi') return Array.isArray(val) && val.length > 0;
     return true;
   }
-  function next() { if (stepIdx < total - 1) setStepIdx(stepIdx + 1); }
+  function next() { if (stepIdx < steps.length - 1) setStepIdx(stepIdx + 1); }
   function back() { if (stepIdx > 0) setStepIdx(stepIdx - 1); }
 
   async function submit() {
@@ -319,7 +263,6 @@ export default function RecommendPage() {
     setError(null);
     setRecs(null);
     setAnim(true);
-
     setTimeout(() => {
       const ranked = scoreIdeas(answers);
       setRecs(ranked.slice(0, 10));
@@ -397,21 +340,21 @@ export default function RecommendPage() {
   return (
     <main className="min-h-screen bg-white">
       <ConferenceAnim show={anim} />
-      <HUDOverlay idea={focus} onClose={() => setFocus(null)} />
+      <FocusOverlay idea={focus} onClose={() => setFocus(null)} />
       <Progress step={stepIdx} total={steps.length - 1} />
       <div className="max-w-4xl mx-auto px-6 py-10 md:py-14">
         {!recs ? (
           <>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-8">Get Matched Ideas</h1>
             <div className="rounded-3xl border border-gray-200 bg-gray-50/60 p-6 md:p-8">
-              <Section title={steps[stepIdx].title}>{renderQuestion(steps[stepIdx])}</Section>
+              <Section title={step.title}>{renderQuestion(step)}</Section>
               <div className="flex items-center justify-between pt-2">
                 <button onClick={back} disabled={stepIdx === 0} className="rounded-full px-4 py-2 text-sm border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50">Back</button>
                 <div className="text-sm text-gray-500">{stepIdx + 1} / {steps.length}</div>
                 {atLastStep ? (
                   <button onClick={submit} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95">Get Recommendations</button>
                 ) : (
-                  <button onClick={next} disabled={!canContinue(steps[stepIdx])} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95 disabled:opacity-50">Next</button>
+                  <button onClick={next} disabled={!canContinue(step)} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95 disabled:opacity-50">Next</button>
                 )}
               </div>
             </div>
