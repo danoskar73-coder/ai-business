@@ -93,7 +93,7 @@ function ConferenceAnim({ show }: { show: boolean }) {
   useEffect(() => {
     if (!show) return;
     setPhase(0);
-    const steps = [900, 900, 900, 900]; // total ~3.6s
+    const steps = [900, 900, 900, 900];
     let t = 0;
     steps.forEach((ms, i) => {
       setTimeout(() => setPhase(i + 1), t += ms);
@@ -112,7 +112,7 @@ function ConferenceAnim({ show }: { show: boolean }) {
           <div className="absolute left-8 bottom-6 flex items-end gap-6">
             <div className="w-12 h-24 bg-gray-300 rounded-md"></div>
             <div className="w-12 h-28 bg-gray-200 rounded-md"></div>
-            <div className="w-12 h-26 bg-gray-400 rounded-md"></div>
+            <div className="w-12 h-[6.5rem] bg-gray-400 rounded-md"></div>
           </div>
           <div className="absolute right-8 bottom-8 flex items-center gap-4">
             <div className="w-10 h-16 bg-blue-500/70 rounded-md"></div>
@@ -126,7 +126,149 @@ function ConferenceAnim({ show }: { show: boolean }) {
           <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-gray-900/60 to-transparent"></div>
         </div>
         <div className="mt-5 h-2 w-full bg-gray-700 rounded-full overflow-hidden">
-          <div className="h-2 bg-blue-500 rounded-full animate-[pulse_900ms_ease-in-out_infinite] w-1/3" style={{width: `${25 * (phase || 1)}%`}}></div>
+          <div className="h-2 bg-blue-500 rounded-full" style={{width: `${25 * (phase || 1)}%`, transition: 'width 300ms ease'}}></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type Rec = Scored;
+
+function HUDOverlay({
+  idea,
+  onClose
+}: {
+  idea: Rec | null;
+  onClose: () => void;
+}) {
+  const [show, setShow] = useState(false);
+  const [showStart, setShowStart] = useState(false);
+
+  useEffect(() => {
+    if (idea) {
+      setShow(true);
+      const t = setTimeout(() => setShowStart(true), 5000);
+      return () => clearTimeout(t);
+    } else {
+      setShow(false);
+      setShowStart(false);
+    }
+  }, [idea]);
+
+  if (!idea) return null;
+
+  const keywords = Array.from(new Set([
+    idea.category, idea.customer, idea.workMode, idea.timeToCash, idea.sales, idea.labor,
+    ...(idea.gtm || []), ...(idea.skills || []), ...(idea.interests || [])
+  ].filter(Boolean))).map(s => String(s).toUpperCase());
+
+  return (
+    <div className={`fixed inset-0 z-50 transition ${show ? 'opacity-100' : 'opacity-0'} bg-black/80`}>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-0 right-0 overflow-hidden whitespace-nowrap opacity-20">
+          <div className="inline-block pr-12 animate-[ticker_20s_linear_infinite] will-change-transform">
+            {keywords.concat(keywords).map((k, i) => (
+              <span key={`t1-${i}`} className="mx-6 font-mono tracking-widest text-sm text-emerald-300">{k}</span>
+            ))}
+          </div>
+        </div>
+        <div className="absolute top-24 left-0 right-0 overflow-hidden whitespace-nowrap opacity-10">
+          <div className="inline-block pr-12 animate-[ticker_28s_linear_infinite] will-change-transform">
+            {keywords.concat(keywords).map((k, i) => (
+              <span key={`t2-${i}`} className="mx-6 font-mono tracking-widest text-sm text-cyan-300">{k}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative h-full w-full flex items-center justify-center px-4">
+        <div className="absolute top-6 left-6">
+          <button onClick={onClose} className="rounded-full border border-white/30 text-white/90 hover:text-white hover:bg-white/10 px-4 py-2 text-sm">Back</button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-6xl w-full">
+          <div className="md:col-span-3 rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-white/10 p-6 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-white">{idea.title}</h3>
+                <div className="mt-1 text-sm text-gray-300">{idea.blurb}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-extrabold text-emerald-400">{Math.round(idea.score)}%</div>
+                <div className="text-xs text-gray-400">match</div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 text-sm text-gray-200">
+              <div><span className="font-semibold">Category:</span> {idea.category.toUpperCase()}</div>
+              <div><span className="font-semibold">Customer:</span> {String(idea.customer).toUpperCase()}</div>
+              <div><span className="font-semibold">Go-to-market:</span> {(idea.gtm||[]).join(', ') || '—'}</div>
+              <div><span className="font-semibold">Skills leveraged:</span> {(idea.skills||[]).join(', ') || '—'}</div>
+              <div><span className="font-semibold">Interests aligned:</span> {(idea.interests||[]).join(', ') || '—'}</div>
+            </div>
+
+            <div className="mt-6">
+              <div className="text-sm font-semibold text-white mb-2">Description</div>
+              <div className="text-sm text-gray-200 leading-relaxed">
+                Launch and operate <span className="font-semibold">{idea.title}</span>. Work mode: <span className="font-semibold">{idea.workMode}</span>. Typical time to first cash: <span className="font-semibold">{idea.timeToCash}</span>. Sales effort: <span className="font-semibold">{idea.sales}</span>. Labor intensity: <span className="font-semibold">{idea.labor}</span>. Inventory: <span className="font-semibold">{idea.inventory}</span>. Compliance: <span className="font-semibold">{idea.compliance}</span>. GTM channels include <span className="font-semibold">{(idea.gtm||[]).join(', ') || '—'}</span>. This path leverages <span className="font-semibold">{(idea.skills||[]).join(', ') || 'generalist ops'}</span> skills and aligns with interests in <span className="font-semibold">{(idea.interests||[]).join(', ') || 'small business'}</span>.
+              </div>
+              {idea.reasons?.length ? (
+                <div className="mt-4">
+                  <div className="text-sm font-semibold text-white mb-1">Why you match</div>
+                  <ul className="list-disc pl-5 text-sm text-gray-200">
+                    {idea.reasons.slice(0,5).map((r,i)=>(<li key={i}>{r}</li>))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="md:col-span-2 rounded-3xl bg-gray-900/70 border border-white/10 p-6 text-emerald-300">
+            <div className="text-sm font-mono tracking-wide text-gray-300 mb-2">TACTICAL STATS</div>
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">CAPITAL BAND</div>
+                <div className="text-emerald-300 text-lg">${(idea as any).capitalBand?.[0] ?? '—'}–${(idea as any).capitalBand?.[1] ?? '—'}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">TIME TO CASH</div>
+                <div className="text-emerald-300 text-lg">{idea.timeToCash.toUpperCase()}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">COMPLIANCE</div>
+                <div className="text-emerald-300 text-lg">{idea.compliance.toUpperCase()}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">WORK MODE</div>
+                <div className="text-emerald-300 text-lg">{idea.workMode.toUpperCase()}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">SALES EFFORT</div>
+                <div className="text-emerald-300 text-lg">{idea.sales.toUpperCase()}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">LABOR</div>
+                <div className="text-emerald-300 text-lg">{idea.labor.toUpperCase()}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">INVENTORY</div>
+                <div className="text-emerald-300 text-lg">{(idea as any).inventory?.toUpperCase?.() ?? '—'}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg p-3 border border-white/5">
+                <div className="text-gray-400">CUSTOMER</div>
+                <div className="text-emerald-300 text-lg">{String(idea.customer).toUpperCase()}</div>
+              </div>
+            </div>
+            <div className={`mt-6 flex justify-center ${showStart ? 'opacity-100 animate-[fadeInUp_400ms_ease-out_forwards]' : 'opacity-0'}`}>
+              <Link
+                href={`/idea?title=${encodeURIComponent(idea.title)}`}
+                className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-semibold px-6 py-3"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -142,6 +284,7 @@ export default function RecommendPage() {
   const [recs, setRecs] = useState<Rec[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [anim, setAnim] = useState(false);
+  const [focus, setFocus] = useState<Rec | null>(null);
 
   const steps: Question[] = useMemo(() => {
     const base = [Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13,Q14];
@@ -215,36 +358,35 @@ export default function RecommendPage() {
     return (
       <div className="grid gap-6">
         {recs.slice(0, 5).map((r, idx) => (
-          <div key={r.title + idx} className="rounded-2xl border border-gray-200 p-6 bg-white shadow-sm">
+          <button key={r.title + idx} onClick={() => setFocus(r)} className="text-left rounded-2xl border border-gray-200 p-6 bg-white shadow-sm hover:shadow-md transition">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl md:text-2xl font-semibold text-gray-900">{r.title}</h3>
-                <p className="mt-1 text-sm text-gray-600">{r.blurb}</p>
+                <p className="mt-1 text-sm text-gray-700">{r.blurb}</p>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-extrabold text-gray-900">{Math.round(r.score)}%</div>
                 <div className="text-xs text-gray-500">match</div>
               </div>
             </div>
-            <div className="mt-3">
-              {r.reasons?.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-gray-700">
+              <div><span className="font-medium">Category:</span> {r.category}</div>
+              <div><span className="font-medium">Customer:</span> {String(r.customer)}</div>
+              <div><span className="font-medium">Work mode:</span> {r.workMode}</div>
+              <div><span className="font-medium">Time to cash:</span> {r.timeToCash}</div>
+              <div><span className="font-medium">Sales effort:</span> {r.sales}</div>
+              <div><span className="font-medium">Labor:</span> {r.labor}</div>
+              <div className="col-span-2"><span className="font-medium">GTM:</span> {(r.gtm||[]).join(', ') || '—'}</div>
+            </div>
+            {r.reasons?.length > 0 && (
+              <div className="mt-3">
+                <div className="text-sm font-medium text-gray-900 mb-1">Why this fits</div>
                 <ul className="list-disc pl-5 text-sm text-gray-700">
                   {r.reasons.slice(0,3).map((k, i) => <li key={i}>{k}</li>)}
                 </ul>
-              )}
-            </div>
-            <div className="mt-4">
-              <div className="rounded-xl border border-dashed border-gray-300 p-4">
-                <div className="text-sm font-medium text-gray-900 mb-2">First steps</div>
-                <div className="blur-[2px] select-none text-gray-500">• Define offer and positioning • Build a simple landing page • Run the first outreach/ads test • Systematize based on results • Scale channels</div>
-                <div className="mt-3">
-                  <Link href="/mentor" className="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-4 py-2 text-sm hover:opacity-95">
-                    Activate a Mentor to unlock the full step-by-step →
-                  </Link>
-                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </button>
         ))}
       </div>
     );
@@ -255,20 +397,21 @@ export default function RecommendPage() {
   return (
     <main className="min-h-screen bg-white">
       <ConferenceAnim show={anim} />
+      <HUDOverlay idea={focus} onClose={() => setFocus(null)} />
       <Progress step={stepIdx} total={steps.length - 1} />
       <div className="max-w-4xl mx-auto px-6 py-10 md:py-14">
         {!recs ? (
           <>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-8">Get Matched Ideas</h1>
             <div className="rounded-3xl border border-gray-200 bg-gray-50/60 p-6 md:p-8">
-              <Section title={step.title}>{renderQuestion(step)}</Section>
+              <Section title={steps[stepIdx].title}>{renderQuestion(steps[stepIdx])}</Section>
               <div className="flex items-center justify-between pt-2">
                 <button onClick={back} disabled={stepIdx === 0} className="rounded-full px-4 py-2 text-sm border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50">Back</button>
                 <div className="text-sm text-gray-500">{stepIdx + 1} / {steps.length}</div>
                 {atLastStep ? (
                   <button onClick={submit} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95">Get Recommendations</button>
                 ) : (
-                  <button onClick={next} disabled={!canContinue(step)} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95 disabled:opacity-50">Next</button>
+                  <button onClick={next} disabled={!canContinue(steps[stepIdx])} className="rounded-full bg-[#2563EB] text-white px-5 py-2 font-semibold hover:opacity-95 disabled:opacity-50">Next</button>
                 )}
               </div>
             </div>
@@ -276,11 +419,11 @@ export default function RecommendPage() {
           </>
         ) : (
           <>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-6">Your Top Matches</h1>
-            {renderResults()}
-            <div className="mt-10">
-              <button onClick={() => { setRecs(null); setStepIdx(0); setAnswers({}); }} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Start Over</button>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900">Your Top Matches</h1>
+              <button onClick={() => { setRecs(null); setStepIdx(0); setAnswers({}); }} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Back</button>
             </div>
+            {renderResults()}
           </>
         )}
       </div>
